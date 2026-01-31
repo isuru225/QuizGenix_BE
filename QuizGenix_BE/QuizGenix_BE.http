@@ -1,0 +1,6 @@
+@QuizGenix_BE_HostAddress = http://localhost:5115
+
+GET {{QuizGenix_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
