@@ -8,7 +8,7 @@ namespace QuizGenix_BE.Models
         public string Title { get; set; }
         public string Content { get; set; }
         public string Subject { get; set; }
-        public string status { get; set; }
+        public string Status { get; set; }
         public Guid TeacherId { get; set; }
         public User Teacher { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

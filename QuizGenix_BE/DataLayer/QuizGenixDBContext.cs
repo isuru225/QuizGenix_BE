@@ -128,7 +128,7 @@ namespace QuizGenix_BE.DataLayer
                 entity.Property(l => l.Title).IsRequired();
                 entity.Property(l => l.Content).IsRequired();
                 entity.Property(l => l.Subject).IsRequired();
-                entity.Property(l => l.status).IsRequired();
+                entity.Property(l => l.Status).IsRequired();
 
                 entity.HasOne(l => l.Teacher)
                       .WithMany(u => u.lessons)

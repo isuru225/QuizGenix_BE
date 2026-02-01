@@ -22,8 +22,8 @@ namespace QuizGenix_BE.Services
             {
                 Title = createExamDto.Title,
                 Description = createExamDto.Description,
-                ScheduledStartTime = createExamDto.ScheduledStartTime,
-                ScheduledEndTime = createExamDto.ScheduledEndTime,
+                ScheduledStartTime = DateTime.SpecifyKind(createExamDto.ScheduledStartTime, DateTimeKind.Utc),
+                ScheduledEndTime = DateTime.SpecifyKind(createExamDto.ScheduledEndTime, DateTimeKind.Utc),
                 DurationMinutes = createExamDto.DurationMinutes,
                 StudentGrade = createExamDto.StudentGrade
             };
@@ -34,7 +34,7 @@ namespace QuizGenix_BE.Services
             var examComposing = new ExamComposing
             {
                 LessonId = createExamDto.LessonId,
-                TeacherId = createExamDto.TeacherId,
+                TeacherId = teacherId,
                 ExamId = exam.Id
             };
 
@@ -76,6 +76,38 @@ namespace QuizGenix_BE.Services
                 DurationMinutes = result.DurationMinutes,
                 CreatedAt = result.CreatedAt,
             };
+        }
+
+        public async Task<List<ExamResponseDto>> GetExamByTeacherId(Guid TeacherId)
+        {
+            var result = await quizGenixDBContext.
+                ExamComposings
+                .Include(e => e.Exam)
+                .ThenInclude(q => q.Questions)
+                .Where(e => e.TeacherId == TeacherId).ToListAsync();
+
+            if (result == null)
+            {
+                throw new Exception("Can not found any exam by Teacher id");
+            }
+            
+            List<ExamResponseDto> examResponseDtos = new List<ExamResponseDto>();
+            foreach (var exam in result) 
+            {
+                examResponseDtos.Add(new ExamResponseDto
+                {
+                    Id = exam.ExamId,
+                    Title = exam.Exam.Title,
+                    Description = exam.Exam.Description,
+                    ScheduledEndTime = exam.Exam.ScheduledEndTime,
+                    ScheduledStartTime = exam.Exam.ScheduledStartTime,
+                    DurationMinutes = exam.Exam.DurationMinutes,
+                    CreatedAt = exam.Exam.CreatedAt
+                });
+            }
+
+            return examResponseDtos;
+
         }
 
     }

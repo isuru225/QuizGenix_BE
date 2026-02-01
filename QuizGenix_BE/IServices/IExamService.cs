@@ -6,5 +6,6 @@ namespace QuizGenix_BE.IServices
     {
         public Task<ExamResponseDto> CreateExam(CreateExamDto createExamDto, Guid teacherId);
         public Task<ExamResponseDto> GetExamById(Guid ExamId);
+        public Task<List<ExamResponseDto>> GetExamByTeacherId(Guid TeacherId);
     }
 }

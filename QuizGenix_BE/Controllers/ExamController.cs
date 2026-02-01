@@ -28,12 +28,26 @@ namespace QuizGenix_BE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("{examId}/get")]
+        [HttpGet("{examId}/getbyexamid")]
         public async Task<IActionResult> GetExamById(Guid examId)
         {
             try
             {
                 var result = await examService.GetExamById(examId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{teacherId}/getbyteacherid")]
+        public async Task<IActionResult> GetExamByTeacherId([FromRoute]Guid teacherId)
+        {
+            try
+            {
+                var result = await examService.GetExamByTeacherId(teacherId);
                 return Ok(result);
             }
             catch (Exception ex)

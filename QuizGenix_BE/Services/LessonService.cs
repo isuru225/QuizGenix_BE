@@ -17,13 +17,12 @@ namespace QuizGenix_BE.Services
 
         public async Task<LessonResponseDto> CreateLesson(Guid teacherId,CreateLessonDto createLessonDto)
         {
-            var lesson = new Lesson
-            {
-                Title = createLessonDto.Title,
-                Content = createLessonDto.Content,
-                Subject = createLessonDto.Subject,
-                TeacherId = teacherId
-            };
+            Lesson lesson = new Lesson();
+            lesson.Title = createLessonDto.Title;
+            lesson.Content = createLessonDto.Content;
+            lesson.Subject = createLessonDto.Subject;
+            lesson.TeacherId = teacherId;
+            lesson.Status = "Published";
 
             quizGenixDBContext.Lessons.Add(lesson);
             await quizGenixDBContext.SaveChangesAsync();
@@ -41,7 +40,8 @@ namespace QuizGenix_BE.Services
                     Id = l.Id,
                     Title = l.Title,
                     Content = l.Content,
-
+                    Subject = l.Subject,
+                    Status = l.Status,
                     TeacherId = l.TeacherId,
                     TeacherName = l.Teacher.Username,
                     CreatedAt = l.CreatedAt

@@ -12,9 +12,9 @@ namespace QuizGenix_BE.Models
         public int DurationMinutes { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public int StudentGrade { get; set; }
-        public ICollection<Question> Questions { get; set; }
-        public ICollection<StudentExam> StudentExams { get; set; }
-        public ICollection<ExamComposing> ExamComposings { get; set; }
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
+        public ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
+        public ICollection<ExamComposing> ExamComposings { get; set; } = new List<ExamComposing>();
     }
 }
 

@@ -138,3 +138,4 @@ E:\QuizGenix_BE\QuizGenix_BE\obj\Debug\net8.0\QuizGenix_BE.genruntimeconfig.cach
 E:\QuizGenix_BE\QuizGenix_BE\obj\Debug\net8.0\ref\QuizGenix_BE.dll
 E:\QuizGenix_BE\QuizGenix_BE\bin\Debug\net8.0\Npgsql.dll
 E:\QuizGenix_BE\QuizGenix_BE\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+E:\QuizGenix_BE\QuizGenix_BE\obj\Debug\net8.0\QuizGenix_BE.sourcelink.json
