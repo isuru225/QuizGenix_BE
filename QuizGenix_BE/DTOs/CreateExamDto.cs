@@ -1,4 +1,5 @@
-﻿namespace QuizGenix_BE.DTOs
+﻿
+namespace QuizGenix_BE.DTOs
 {
     public class CreateExamDto
     {
@@ -9,6 +10,7 @@
         public int DurationMinutes { get; set; }
         public Guid LessonId { get; set; }
         public Guid TeacherId { get; set; }
+        public List<CreateQuestionDto> Questions { get; set; }
         public int StudentGrade { get; set; }
     }
 }

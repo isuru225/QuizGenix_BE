@@ -15,6 +15,7 @@ namespace QuizGenix_BE.Models
         public ICollection<StudentAnswer>? StudentAnswer { get; set; }
         public ICollection<ExamComposing>? ExamComposings { get; set; }
         public ICollection<Lesson>? lessons { get; set; }
+        public ICollection<Teaching>? Teachings { get; set; }
     }
 
     public enum UserRole

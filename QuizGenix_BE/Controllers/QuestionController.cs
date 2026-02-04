@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuizGenix_BE.DTOs;
 using QuizGenix_BE.IServices;
 
@@ -6,6 +7,7 @@ namespace QuizGenix_BE.Controllers
 {
     [ApiController]
     [Route("/api/question")]
+    [Authorize]
     public class QuestionController : Controller
     {
         private IQuestionService questionService;
@@ -13,19 +15,19 @@ namespace QuizGenix_BE.Controllers
         {
             this.questionService = questionService;
         }
-        [HttpPost("add")]
-        public async Task<IActionResult> CreateQuestions([FromBody] CreateQuestionDto createQuestionDto) 
-        {
-            try 
-            {
-                var result = await questionService.CreateQuestion(createQuestionDto);
-                return Ok(result);
-            }
-            catch (Exception ex) 
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //[HttpPost("add")]
+        //public async Task<IActionResult> CreateQuestions([FromBody] CreateQuestionDto createQuestionDto) 
+        //{
+        //    try 
+        //    {
+        //        var result = await questionService.CreateQuestion(createQuestionDto);
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex) 
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
         [HttpGet("{examid}/get")]
         public async Task<IActionResult> GetQuestionsByExamId([FromRoute] Guid examid)
         {
@@ -40,21 +42,22 @@ namespace QuizGenix_BE.Controllers
             }
         }
 
-        [HttpPut("{examid}/update")]
-        public async Task<IActionResult> UpdateQuestion([FromBody] UpdateQuestionDto updateQuestionDto, [FromRoute] Guid examid)
-        {
-            try
-            {
-                var result = await questionService.UpdateQuestion(examid, updateQuestionDto);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //[HttpPut("{examid}/update")]
+        //public async Task<IActionResult> UpdateQuestion([FromBody] UpdateQuestionDto updateQuestionDto, [FromRoute] Guid examid)
+        //{
+        //    try
+        //    {
+        //        var result = await questionService.UpdateQuestion(examid, updateQuestionDto);
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
 
         [HttpDelete("{examid}/delete")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> DeleteQuestion([FromRoute] Guid questionId)
         {
             try

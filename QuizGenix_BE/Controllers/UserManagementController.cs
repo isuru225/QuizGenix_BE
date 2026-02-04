@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuizGenix_BE.DTOs;
 using QuizGenix_BE.IServices;
 
@@ -34,6 +35,13 @@ namespace QuizGenix_BE.Controllers
             try
             {
                 var result = await userManagementService.Login(loginRequestDTO);
+                Response.Cookies.Append("access_token", result.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,              
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(1)
+                });
                 return Ok(result);
             }
             catch (Exception ex)
@@ -57,10 +65,20 @@ namespace QuizGenix_BE.Controllers
             }
 
         }
+        [Authorize(Roles = "Teacher")]
+        [HttpGet("{teacherId}/getallstudents")]
+        public async Task<IActionResult> GetAllStudents(Guid teacherId)
+        {
+            try
+            {
+                var result = await userManagementService.GetAllStudents(teacherId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
-        //public IActionResult Index()
-        //{
-        //    return Ok("User management API is running");
-        //}
+        }
     }
 }

@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuizGenix_BE.DTOs;
 using QuizGenix_BE.IServices;
 
 namespace QuizGenix_BE.Controllers
 {
+
     [ApiController]
     [Route("/api/exam")]
+    [Authorize]
     public class ExamController : Controller
     {
         private IExamService examService;
@@ -16,6 +19,7 @@ namespace QuizGenix_BE.Controllers
             this.questionService = questionService;
         }
         [HttpPost("{teacherId}/add")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> CreateExamSheet(Guid teacherId, [FromBody] CreateExamDto createExamDto) 
         {
             try 
@@ -43,6 +47,7 @@ namespace QuizGenix_BE.Controllers
         }
 
         [HttpGet("{teacherId}/getbyteacherid")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetExamByTeacherId([FromRoute]Guid teacherId)
         {
             try
@@ -65,6 +70,35 @@ namespace QuizGenix_BE.Controllers
                 return Ok(result);
             }
             catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{teacherId}/dashboard")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetDashboardInfo(Guid teacherId)
+        {
+            try
+            {
+                var result = await examService.GetDashBoradInfoByTeacherId(teacherId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("{examId}/update")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> UpdateExamById(Guid examId, [FromBody] CreateExamDto createExamDto) 
+        {
+            try 
+            {
+                var result = await examService.UpdateExambyId(examId,createExamDto);
+                return Ok(result);
+            }
+            catch (Exception ex) 
             {
                 return BadRequest(ex.Message);
             }

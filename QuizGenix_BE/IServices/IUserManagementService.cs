@@ -7,5 +7,6 @@ namespace QuizGenix_BE.IServices
         public Task<RegisterUserResponse> RegisterUser(RegisterUserRequest registerUserRequest);
         public Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDTO);
         public Task<UserInfoDto> GetUserById(Guid UserId);
+        public Task<List<UserInfoDto>> GetAllStudents(Guid TeacherId);
     }
 }

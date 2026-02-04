@@ -8,5 +8,6 @@ namespace QuizGenix_BE.IServices
         public Task<List<LessonResponseDto>> GetLessonsByTeacher(Guid teacherId);
         public Task<LessonResponseDto> GetLessonById(Guid lessonId);
         public Task<bool> DeleteLesson(Guid lessonId, Guid teacherId);
+        public Task<LessonResponseDto> UpdateLesson(Guid lessonId, CreateLessonDto createLessonDto);
     }
 }

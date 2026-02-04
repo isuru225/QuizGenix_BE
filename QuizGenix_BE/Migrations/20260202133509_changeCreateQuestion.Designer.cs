@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuizGenix_BE.DataLayer;
@@ -11,9 +12,11 @@ using QuizGenix_BE.DataLayer;
 namespace QuizGenix_BE.Migrations
 {
     [DbContext(typeof(QuizGenixDBContext))]
-    partial class QuizGenixDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260202133509_changeCreateQuestion")]
+    partial class changeCreateQuestion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -230,19 +233,6 @@ namespace QuizGenix_BE.Migrations
                     b.ToTable("StudentExams");
                 });
 
-            modelBuilder.Entity("QuizGenix_BE.Models.Teaching", b =>
-                {
-                    b.Property<Guid>("TeacherId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Grade")
-                        .HasColumnType("integer");
-
-                    b.HasKey("TeacherId", "Grade");
-
-                    b.ToTable("Teachings");
-                });
-
             modelBuilder.Entity("QuizGenix_BE.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -372,17 +362,6 @@ namespace QuizGenix_BE.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("QuizGenix_BE.Models.Teaching", b =>
-                {
-                    b.HasOne("QuizGenix_BE.Models.User", "Teacher")
-                        .WithMany("Teachings")
-                        .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Teacher");
-                });
-
             modelBuilder.Entity("QuizGenix_BE.Models.Answer", b =>
                 {
                     b.Navigation("StudentAnswers");
@@ -414,8 +393,6 @@ namespace QuizGenix_BE.Migrations
                     b.Navigation("StudentAnswer");
 
                     b.Navigation("StudentExams");
-
-                    b.Navigation("Teachings");
 
                     b.Navigation("lessons");
                 });

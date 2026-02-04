@@ -3,6 +3,7 @@ using QuizGenix_BE.DataLayer;
 using QuizGenix_BE.Models;
 using QuizGenix_BE.DTOs;
 using QuizGenix_BE.IServices;
+using System.Runtime.InteropServices;
 
 namespace QuizGenix_BE.Services
 {
@@ -16,47 +17,80 @@ namespace QuizGenix_BE.Services
             this.quizGenixDBContext = quizGenixDBContext;
         }
 
-        public async Task<QuestionResponseDto> CreateQuestion(CreateQuestionDto createQuestionDto)
+        //public async Task<QuestionResponseDto> CreateQuestion(CreateQuestionDto createQuestionDto)
+        //{
+        //    var question = new Question
+        //    {
+        //        QuestionText = createQuestionDto.Content,
+        //        OptionA = createQuestionDto.PossibleAnswers[0],
+        //        OptionB = createQuestionDto.PossibleAnswers[1],
+        //        OptionC = createQuestionDto.PossibleAnswers[2],
+        //        OptionD = createQuestionDto.PossibleAnswers[3],
+        //        CorrectAnswer = createQuestionDto.CorrectAnswer,
+        //        ExamId = createQuestionDto.ExamID,
+        //        IsAIGenerated = createQuestionDto.IsAIGenerated
+        //    };
+
+        //    quizGenixDBContext.Questions.Add(question);
+        //    await quizGenixDBContext.SaveChangesAsync();
+
+        //    return MapToDto(question);
+        //}
+
+        public async Task<QuestionResponseDto> CreateMultipleQuestions(List<CreateQuestionDto> createQuestionDtos, Guid eaxmId) 
         {
-            var question = new Question
+            if (createQuestionDtos.Count == 0) 
             {
-                QuestionText = createQuestionDto.QuestionText,
-                OptionA = createQuestionDto.OptionA,
-                OptionB = createQuestionDto.OptionB,
-                OptionC = createQuestionDto.OptionC,
-                OptionD = createQuestionDto.OptionD,
-                CorrectAnswer = createQuestionDto.CorrectAnswer,
-                ExamId = createQuestionDto.ExamID,
-                IsAIGenerated = createQuestionDto.IsAIGenerated
-            };
-
-            quizGenixDBContext.Questions.Add(question);
-            await quizGenixDBContext.SaveChangesAsync();
-
-            return MapToDto(question);
-        }
-
-        public async Task<QuestionResponseDto> UpdateQuestion(Guid questionId, UpdateQuestionDto updateQuestionDto)
-        {
-            var question = await quizGenixDBContext.Questions.FindAsync(questionId);
-
-            if (question == null)
-            {
-                throw new Exception("Question not found");
+                throw new ArgumentException("Incoming question list is empty");
             }
 
-            question.QuestionText = updateQuestionDto.QuestionText;
-            question.OptionA = updateQuestionDto.OptionA;
-            question.OptionB = updateQuestionDto.OptionB;
-            question.OptionC = updateQuestionDto.OptionC;
-            question.OptionD = updateQuestionDto.OptionD;
-            question.CorrectAnswer = updateQuestionDto.CorrectAnswer;
-            question.IsAIGenerated = updateQuestionDto.IsAIGenerated;
+            ICollection<Question> questions = new List<Question>();
 
+            foreach (var question in createQuestionDtos) 
+            {
+                questions.Add(new Question
+                {
+                    QuestionText = question.Content,
+                    OptionA = question.PossibleAnswers[0],
+                    OptionB = question.PossibleAnswers[1],
+                    OptionC = question.PossibleAnswers[2],
+                    OptionD = question.PossibleAnswers[3],
+                    CorrectAnswer = question.CorrectAnswer,
+                    ExamId = eaxmId,
+                    IsAIGenerated = question.IsAIGenerated
+                });
+            }
+
+            quizGenixDBContext.Questions.AddRange(questions);
             await quizGenixDBContext.SaveChangesAsync();
 
-            return MapToDto(question);
+            return new QuestionResponseDto
+            {
+                isSuccessfullySaved = true
+            };
         }
+
+        //public async Task<QuestionResponseDto> UpdateQuestion(Guid questionId, UpdateQuestionDto updateQuestionDto)
+        //{
+        //    var question = await quizGenixDBContext.Questions.FindAsync(questionId);
+
+        //    if (question == null)
+        //    {
+        //        throw new Exception("Question not found");
+        //    }
+
+        //    question.QuestionText = updateQuestionDto.QuestionText;
+        //    question.OptionA = updateQuestionDto.OptionA;
+        //    question.OptionB = updateQuestionDto.OptionB;
+        //    question.OptionC = updateQuestionDto.OptionC;
+        //    question.OptionD = updateQuestionDto.OptionD;
+        //    question.CorrectAnswer = updateQuestionDto.CorrectAnswer;
+        //    question.IsAIGenerated = updateQuestionDto.IsAIGenerated;
+
+        //    await quizGenixDBContext.SaveChangesAsync();
+
+        //    return MapToDto(question);
+        //}
 
         public async Task<ExamQuestions> GetQuestionsByExamId(Guid Examid) 
         {
@@ -96,22 +130,22 @@ namespace QuizGenix_BE.Services
             await quizGenixDBContext.SaveChangesAsync();
             return true;
         }
-        private QuestionResponseDto MapToDto(Question question)
-        {
-            return new QuestionResponseDto
-            {
-                Id = question.Id,
-                QuestionText = question.QuestionText,
-                OptionA = question.OptionA,
-                OptionB = question.OptionB,
-                OptionC = question.OptionC,
-                OptionD = question.OptionD,
-                CorrectAnswer = question.CorrectAnswer,
-                IsAIGenerated = question.IsAIGenerated,
-                ExamID = question.ExamId,
-                CreatedAt = question.CreatedAt
-            };
-        }
+        //private QuestionResponseDto MapToDto(Question question)
+        //{
+        //    return new QuestionResponseDto
+        //    {
+        //        Id = question.Id,
+        //        QuestionText = question.QuestionText,
+        //        OptionA = question.OptionA,
+        //        OptionB = question.OptionB,
+        //        OptionC = question.OptionC,
+        //        OptionD = question.OptionD,
+        //        CorrectAnswer = question.CorrectAnswer,
+        //        IsAIGenerated = question.IsAIGenerated,
+        //        ExamID = question.ExamId,
+        //        CreatedAt = question.CreatedAt
+        //    };
+        //}
 
 
     }

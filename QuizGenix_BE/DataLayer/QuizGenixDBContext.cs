@@ -18,6 +18,7 @@ namespace QuizGenix_BE.DataLayer
         public DbSet<StudentExam> StudentExams { get; set; }
         public DbSet<Answer> Answers { get; set; }
         public DbSet<StudentAnswer> StudentAnswers { get; set; }
+        public DbSet<Teaching> Teachings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -157,6 +158,25 @@ namespace QuizGenix_BE.DataLayer
                       .WithMany(u => u.ExamComposings)
                       .HasForeignKey(lc => lc.TeacherId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ============================
+            // EXAM COMPOSING (Many-to-Many)
+            // ============================
+
+            modelBuilder.Entity<Teaching>(entity =>
+            {
+                // Composite Primary Key
+                entity.HasKey(t => new { t.TeacherId, t.Grade });
+
+                // Teacher relationship
+                entity.HasOne(t => t.Teacher)
+                      .WithMany(u => u.Teachings)
+                      .HasForeignKey(t => t.TeacherId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(t => t.Grade)
+                      .IsRequired();
             });
         }
 

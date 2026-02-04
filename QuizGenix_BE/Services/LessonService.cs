@@ -67,9 +67,40 @@ namespace QuizGenix_BE.Services
                 Content = lesson.Content,
                 TeacherId = lesson.TeacherId,
                 TeacherName = lesson.Teacher.Username,
-                CreatedAt = lesson.CreatedAt
+                CreatedAt = lesson.CreatedAt,
+                Subject = lesson.Subject
             };
         }
+
+        public async Task<LessonResponseDto> UpdateLesson(Guid lessonId, CreateLessonDto createLessonDto)
+        {
+            var lesson = await quizGenixDBContext.Lessons.Include(e => e.Teacher).FirstOrDefaultAsync(e => e.Id == lessonId);
+
+            if (lesson == null) 
+            { 
+                throw new Exception("Exam not found");
+            }
+
+            lesson.Title = createLessonDto.Title;
+            lesson.Subject = createLessonDto.Subject;
+            lesson.Content = createLessonDto.Content;
+
+            await quizGenixDBContext.SaveChangesAsync();
+
+            return new LessonResponseDto
+            {
+                Id = lesson.Id,
+                Title = createLessonDto.Title,
+                Content = createLessonDto.Content,
+                Subject = createLessonDto.Subject,
+                Status = lesson.Status,
+                TeacherId = lesson.TeacherId,
+                TeacherName = lesson.Teacher.Username,
+                CreatedAt = lesson.CreatedAt,
+
+            };
+        }
+
 
         public async Task<bool> DeleteLesson(Guid lessonId, Guid teacherId)
         {

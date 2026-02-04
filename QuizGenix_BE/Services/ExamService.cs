@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using QuizGenix_BE.DataLayer;
 using QuizGenix_BE.DTOs;
 using QuizGenix_BE.IServices;
@@ -10,11 +11,15 @@ namespace QuizGenix_BE.Services
     {
         private readonly QuizGenixDBContext quizGenixDBContext;
         private ILessonService lessonService;
+        private IQuestionService questionService;
+        private IUserManagementService userManagementService;
 
-        public ExamService(QuizGenixDBContext quizGenixDBContext, ILessonService lessonService)
+        public ExamService(QuizGenixDBContext quizGenixDBContext, ILessonService lessonService, IQuestionService questionService, IUserManagementService userManagementService)
         {
             this.quizGenixDBContext = quizGenixDBContext;
             this.lessonService = lessonService;
+            this.questionService = questionService;
+            this.userManagementService = userManagementService;
         }
         public async Task<ExamResponseDto> CreateExam(CreateExamDto createExamDto, Guid teacherId)
         {
@@ -37,9 +42,12 @@ namespace QuizGenix_BE.Services
                 TeacherId = teacherId,
                 ExamId = exam.Id
             };
-
+            //add records to the examcomposing
             quizGenixDBContext.ExamComposings.Add(examComposing);
             await quizGenixDBContext.SaveChangesAsync();
+
+            //add questions to the db
+            await questionService.CreateMultipleQuestions(createExamDto.Questions, exam.Id);
 
             //Get lesson info with teacher info
             var lessonInfo = await lessonService.GetLessonById(createExamDto.LessonId);
@@ -59,22 +67,49 @@ namespace QuizGenix_BE.Services
 
         public async Task<ExamResponseDto> GetExamById(Guid ExamId) 
         {
-            var result = await quizGenixDBContext.Exams.FindAsync(ExamId);
+            var result = await quizGenixDBContext.
+                ExamComposings
+                .Include(e => e.Lesson)
+                .Include(e => e.Exam)
+                .ThenInclude(q => q.Questions)
+                .FirstOrDefaultAsync(e => e.ExamId == ExamId);
 
-            if (result == null) 
+            if (result == null)
             {
-                throw new Exception("Exam not found");
+                throw new Exception("Can not found any exam by the provided exam id");
             }
 
-            return new ExamResponseDto 
+            List<QuestionResult> questionList = new List<QuestionResult>();
+
+            foreach (var question in result.Exam.Questions)
             {
-                Id = result.Id,
-                Title = result.Title,
-                Description = result.Description,
-                ScheduledEndTime = result.ScheduledEndTime,
-                ScheduledStartTime = result.ScheduledStartTime,
-                DurationMinutes = result.DurationMinutes,
-                CreatedAt = result.CreatedAt,
+                questionList.Add(new QuestionResult
+                {
+                    Id = question.Id,
+                    QuestionText = question.QuestionText,
+                    OptionA = question.OptionA,
+                    OptionB = question.OptionB,
+                    OptionC = question.OptionC,
+                    OptionD = question.OptionD,
+                    CorrectAnswer = question.CorrectAnswer,
+                    IsAIGenerated = question.IsAIGenerated,
+                    CreatedAt = question.CreatedAt
+                });
+            }
+
+            return new ExamResponseDto
+            {
+                Id = result.Exam.Id,
+                Title = result.Exam.Title,
+                Description = result.Exam.Description,
+                ScheduledEndTime = result.Exam.ScheduledEndTime,
+                ScheduledStartTime = result.Exam.ScheduledStartTime,
+                DurationMinutes = result.Exam.DurationMinutes,
+                CreatedAt = result.Exam.CreatedAt,
+                Questions = questionList,
+                StudentGrade = result.Exam.StudentGrade,
+                LessonId = result.Lesson.Id,
+                LessonTitle = result.Lesson.Title
             };
         }
 
@@ -82,6 +117,8 @@ namespace QuizGenix_BE.Services
         {
             var result = await quizGenixDBContext.
                 ExamComposings
+                .Include(e => e.Teacher)
+                .Include(e => e.Lesson)
                 .Include(e => e.Exam)
                 .ThenInclude(q => q.Questions)
                 .Where(e => e.TeacherId == TeacherId).ToListAsync();
@@ -94,22 +131,127 @@ namespace QuizGenix_BE.Services
             List<ExamResponseDto> examResponseDtos = new List<ExamResponseDto>();
             foreach (var exam in result) 
             {
-                examResponseDtos.Add(new ExamResponseDto
+                ExamResponseDto examResponseDto = new ExamResponseDto();
+                examResponseDto.Id = exam.ExamId;
+                examResponseDto.Title = exam.Exam.Title;
+                examResponseDto.Description = exam.Exam.Description;
+                examResponseDto.ScheduledEndTime = exam.Exam.ScheduledEndTime;
+                examResponseDto.ScheduledStartTime = exam.Exam.ScheduledStartTime;
+                examResponseDto.DurationMinutes = exam.Exam.DurationMinutes;
+                examResponseDto.CreatedAt = exam.Exam.CreatedAt;
+                examResponseDto.StudentGrade = exam.Exam.StudentGrade;
+                examResponseDto.LessonId = exam.LessonId;
+                examResponseDto.LessonTitle = exam.Lesson.Title;
+                examResponseDto.TeacherId = exam.TeacherId;
+                examResponseDto.TeacherName = exam.Teacher.Username;
+
+                foreach (var question in exam.Exam.Questions) 
                 {
-                    Id = exam.ExamId,
-                    Title = exam.Exam.Title,
-                    Description = exam.Exam.Description,
-                    ScheduledEndTime = exam.Exam.ScheduledEndTime,
-                    ScheduledStartTime = exam.Exam.ScheduledStartTime,
-                    DurationMinutes = exam.Exam.DurationMinutes,
-                    CreatedAt = exam.Exam.CreatedAt
-                });
+                    examResponseDto.Questions.Add(new QuestionResult 
+                    {
+                        Id = question.Id,
+                        QuestionText = question.QuestionText,
+                        OptionA = question.OptionA,
+                        OptionB = question.OptionB,
+                        OptionC = question.OptionC,
+                        OptionD = question.OptionD,
+                        CorrectAnswer = question.CorrectAnswer,
+                        IsAIGenerated = question.IsAIGenerated,
+                        CreatedAt = question.CreatedAt,
+                    });
+                }
+
+                examResponseDtos.Add(examResponseDto);
             }
 
             return examResponseDtos;
 
         }
 
+        public async Task<TeacherDashboardResponseDto> GetDashBoradInfoByTeacherId(Guid TeacherId)
+        {
+            var results = await quizGenixDBContext.
+                ExamComposings
+                .Include(e => e.Lesson)
+                .Include(e => e.Exam)
+                .Where(e => e.TeacherId == TeacherId).ToListAsync();
+
+            List<ExamLessonPairs> examLessonPairs = new List<ExamLessonPairs> ();
+
+            foreach (var result in results) 
+            {
+                examLessonPairs.Add(new ExamLessonPairs
+                {
+                    Lesson = new LessonResponseDto
+                    {
+                        Id = result.Lesson.Id,
+                        Title = result.Lesson.Title,
+                        CreatedAt = result.Lesson.CreatedAt
+                    }
+                    ,
+                    Exam = new ExamResponseDto 
+                    {
+                        Id = result.Exam.Id,
+                        Title = result.Exam.Title,
+                        ScheduledEndTime = result.Exam.ScheduledEndTime,
+                        ScheduledStartTime = result.Exam.ScheduledStartTime,
+                        CreatedAt = result.Exam.CreatedAt
+                    }
+                }) ;
+            }
+
+            var studentResult = await userManagementService.GetAllStudents(TeacherId);
+
+            return new TeacherDashboardResponseDto 
+            {
+                ExamLessonPairs = examLessonPairs,
+                userInfoDtos = studentResult
+            };
+
+        }
+
+        public async Task<ExamResponseDto> UpdateExambyId(Guid ExamId, CreateExamDto createExamDto)
+        {
+            var exam = await quizGenixDBContext.Exams.FirstOrDefaultAsync(e => e.Id == ExamId);
+
+            if (exam == null) 
+            {
+                throw new Exception("Exam not found based on the given ID");
+            }
+
+            exam.Title = createExamDto.Title;
+            exam.Description = createExamDto.Description;
+            exam.ScheduledEndTime = createExamDto.ScheduledEndTime;
+            exam.ScheduledStartTime = createExamDto.ScheduledStartTime;
+            exam.StudentGrade = createExamDto.StudentGrade;
+            exam.DurationMinutes = createExamDto.DurationMinutes;
+            
+            await quizGenixDBContext.SaveChangesAsync();
+            
+            //add questions to the db
+            await questionService.CreateMultipleQuestions(createExamDto.Questions, exam.Id);
+
+            //Get lesson info with teacher info
+            var lessonInfo = await lessonService.GetLessonById(createExamDto.LessonId);
+
+            return new ExamResponseDto
+            {
+                Id = exam.Id,
+                Title = exam.Title,
+                Description = exam.Description,
+                ScheduledStartTime = exam.ScheduledStartTime,
+                ScheduledEndTime = exam.ScheduledEndTime,
+                DurationMinutes = exam.DurationMinutes,
+                CreatedAt = exam.CreatedAt,
+                LessonTitle = lessonInfo.Title,
+                TeacherName = lessonInfo.TeacherName
+            };
+
+        }
+
     }
+
+  
+
 }
 

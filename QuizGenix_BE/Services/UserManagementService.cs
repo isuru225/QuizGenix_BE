@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
+﻿using Azure;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using QuizGenix_BE.DataLayer;
 using QuizGenix_BE.DTOs;
@@ -69,10 +70,11 @@ namespace QuizGenix_BE.Services
             {
                 throw new Exception("Invalid email or password");
             }
+            var token = tokenService.GenerateJwtToken(user);
 
             return new LoginResponseDTO
             {
-                Token = tokenService.GenerateJwtToken(user),
+                Token = token,
                 UserId = user.Id,
                 Username = user.Username,
                 Email = user.Email,
@@ -98,6 +100,44 @@ namespace QuizGenix_BE.Services
                 AdmissionDate = result.AdmissionDate
             };
             
+        }
+
+        public async Task<List<UserInfoDto>> GetAllStudents(Guid TeacherId) 
+        {
+            //get teacher info based on teacher id
+            var result = await quizGenixDBContext.Users.Include(i => i.Teachings).Where(e => e.Id == TeacherId).ToListAsync();
+            //get student info 
+            var students = await quizGenixDBContext.Users.Where(e => e.Role == UserRole.Student).ToListAsync();
+
+            if (result == null || students == null)
+            {
+                throw new Exception("No students or teachers avaiable yet!");
+            }
+
+            List<int> grades = new List<int>(); // grades which are taught by the teacher
+            foreach (var teaching in result[0].Teachings) 
+            {
+                grades.Add(teaching.Grade);
+            } 
+
+            List<UserInfoDto> userInfoDtos = new List<UserInfoDto>();
+            foreach (var user in students) 
+            {
+                if (grades.Contains(user.Grade)) 
+                {
+                    userInfoDtos.Add(new UserInfoDto
+                    {
+                        Id = user.Id,
+                        Username = user.Username,
+                        Email = user.Email,
+                        Grade = user.Grade,
+                        AdmissionDate = user.AdmissionDate,
+                        Role = user.Role,
+                    });
+                }
+            }
+
+            return userInfoDtos;
         }
     }
 }

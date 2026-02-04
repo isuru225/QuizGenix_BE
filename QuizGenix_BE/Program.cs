@@ -31,6 +31,19 @@ namespace QuizGenix_BE
             })
             .AddJwtBearer(options =>
             {
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        // Read token from cookie
+                        var token = context.Request.Cookies["access_token"];
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -86,9 +99,10 @@ namespace QuizGenix_BE
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp",
-                    policy => policy.AllowAnyOrigin()
+                    policy => policy.WithOrigins("http://localhost:8080")
                                    .AllowAnyMethod()
-                                   .AllowAnyHeader());
+                                   .AllowAnyHeader().
+                                   AllowCredentials());
             });
 
             var app = builder.Build();
