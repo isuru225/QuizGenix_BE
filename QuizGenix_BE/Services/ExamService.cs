@@ -168,6 +168,45 @@ namespace QuizGenix_BE.Services
 
         }
 
+        public async Task<List<ExamResponseDto>> GetExamByGrade(int studentGrade) 
+        {
+            //var result = await quizGenixDBContext.Exams.Where(e => e.StudentGrade == studentGrade).ToListAsync();
+            var result = await quizGenixDBContext.
+                ExamComposings
+                .Include(e => e.Lesson)
+                .Include(e => e.Exam)
+                .Include(e => e.Teacher)
+                .Where(e => e.Exam.StudentGrade == studentGrade).ToListAsync();
+
+            if (result == null  && result?.Count > 0) 
+            {
+                throw new Exception($"No exams are assigned for grade {studentGrade}");
+            }
+
+            List<ExamResponseDto> examResponseDtos = new List<ExamResponseDto>();
+
+            foreach (var examlessonPair in result) 
+            {
+                examResponseDtos.Add(new ExamResponseDto
+                {
+                    Id = examlessonPair.Exam.Id,
+                    Title = examlessonPair.Exam.Title,
+                    Description = examlessonPair.Exam.Description,
+                    ScheduledEndTime = examlessonPair.Exam.ScheduledEndTime,
+                    ScheduledStartTime = examlessonPair.Exam.ScheduledStartTime,
+                    DurationMinutes = examlessonPair.Exam.DurationMinutes,
+                    LessonId = examlessonPair.Lesson.Id,
+                    LessonTitle = examlessonPair.Lesson.Title,
+                    TeacherId = examlessonPair.Teacher.Id,
+                    TeacherName = examlessonPair.Teacher.Username,
+                    CreatedAt = examlessonPair.CreatedAt,
+                    StudentGrade = examlessonPair.Exam.StudentGrade
+                });
+            }
+
+            return examResponseDtos;
+        }
+
         public async Task<TeacherDashboardResponseDto> GetDashBoradInfoByTeacherId(Guid TeacherId)
         {
             var results = await quizGenixDBContext.
@@ -212,7 +251,7 @@ namespace QuizGenix_BE.Services
 
         public async Task<ExamResponseDto> UpdateExambyId(Guid ExamId, CreateExamDto createExamDto)
         {
-            var exam = await quizGenixDBContext.Exams.FirstOrDefaultAsync(e => e.Id == ExamId);
+            var exam = await quizGenixDBContext.Exams.Include(e => e.Questions).FirstOrDefaultAsync(e => e.Id == ExamId);
 
             if (exam == null) 
             {
@@ -225,11 +264,75 @@ namespace QuizGenix_BE.Services
             exam.ScheduledStartTime = createExamDto.ScheduledStartTime;
             exam.StudentGrade = createExamDto.StudentGrade;
             exam.DurationMinutes = createExamDto.DurationMinutes;
-            
+
+            List<CreateQuestionDto> newIncomingQuestions = new List<CreateQuestionDto>();
+            List<Question> deletedQuestions = new List<Question>();
+            List<Guid> incomingQuestionIds = new List<Guid>();
+            List<Guid> originalQuestionsIds = new List<Guid>();
+
+            bool isOriginalQuestionDeleted = true;
+            bool isLoopedOnce = false;
+
+            //Update the questions
+            foreach (var question in exam.Questions) 
+            {
+                isOriginalQuestionDeleted = true;
+                originalQuestionsIds.Add(question.Id);
+                foreach (var incomingQuestion in createExamDto.Questions) 
+                {
+                    if (!isLoopedOnce) 
+                    {
+                        incomingQuestionIds.Add(incomingQuestion.Id);
+                    }
+                    if (question.Id == incomingQuestion.Id) 
+                    {
+                        question.QuestionText = incomingQuestion.Content;
+                        question.CorrectAnswer = incomingQuestion.CorrectAnswer;
+                        question.IsAIGenerated = incomingQuestion.IsAIGenerated;
+                        question.OptionA = incomingQuestion.PossibleAnswers[0];
+                        question.OptionB = incomingQuestion.PossibleAnswers[1];
+                        question.OptionC = incomingQuestion.PossibleAnswers[2];
+                        question.OptionD = incomingQuestion.PossibleAnswers[3];
+                        isOriginalQuestionDeleted = false;
+                    }
+                }
+
+                isLoopedOnce = true;
+                if (isOriginalQuestionDeleted) 
+                {
+                    deletedQuestions.Add(question);
+                }
+            }
+           
+            foreach (var incomingQuestion in createExamDto.Questions) 
+            {
+                if (!originalQuestionsIds.Contains(incomingQuestion.Id)) 
+                {
+                    newIncomingQuestions.Add(new CreateQuestionDto
+                    {
+                        CorrectAnswer = incomingQuestion.CorrectAnswer,
+                        Content = incomingQuestion.Content,
+                        PossibleAnswers = incomingQuestion.PossibleAnswers,
+                        IsAIGenerated = incomingQuestion.IsAIGenerated,
+                        ExamID = ExamId
+                    });
+                }
+            }
+
+            //update the database
             await quizGenixDBContext.SaveChangesAsync();
-            
-            //add questions to the db
-            await questionService.CreateMultipleQuestions(createExamDto.Questions, exam.Id);
+
+            if (newIncomingQuestions.Count > 0) 
+            {
+                //Add new questions
+                await questionService.CreateMultipleQuestions(newIncomingQuestions, ExamId);
+            }
+
+            if (deletedQuestions.Count > 0) 
+            {
+                //Removed unneccessary questions
+                await questionService.DeleteMultipleQuestions(deletedQuestions);
+            }
 
             //Get lesson info with teacher info
             var lessonInfo = await lessonService.GetLessonById(createExamDto.LessonId);

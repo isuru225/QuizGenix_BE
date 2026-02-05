@@ -130,6 +130,37 @@ namespace QuizGenix_BE.Services
             await quizGenixDBContext.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> DeleteMultipleQuestionsByIds(List<Guid> questionIds) 
+        {
+            var questionsAreGoingToRemove = await quizGenixDBContext.Questions.Where(q => questionIds.Contains(q.Id)).ToListAsync();
+
+            if (questionsAreGoingToRemove == null) 
+            {
+                throw new Exception("No questions avaialble for removing");
+            }
+
+            //remove the questions from the database
+            quizGenixDBContext.Questions.RemoveRange(questionsAreGoingToRemove);
+            //save changes to the database
+            await quizGenixDBContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> DeleteMultipleQuestions(List<Question> deletedQuestion) 
+        {
+            if (deletedQuestion.Count == 0) 
+            {
+                return false;
+            }
+            //remove the questions from the database
+            quizGenixDBContext.Questions.RemoveRange(deletedQuestion);
+            //save changes to the database
+            await quizGenixDBContext.SaveChangesAsync();
+
+            return true;
+        }
         //private QuestionResponseDto MapToDto(Question question)
         //{
         //    return new QuestionResponseDto

@@ -103,5 +103,20 @@ namespace QuizGenix_BE.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("getexambygrade")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetExamByGrade([FromQuery] int grade)
+        {
+            try
+            {
+                var result = await examService.GetExamByGrade(grade);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

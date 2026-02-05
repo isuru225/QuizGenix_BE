@@ -9,5 +9,6 @@ namespace QuizGenix_BE.IServices
         public Task<List<ExamResponseDto>> GetExamByTeacherId(Guid TeacherId);
         public Task<TeacherDashboardResponseDto> GetDashBoradInfoByTeacherId(Guid TeacherId);
         public Task<ExamResponseDto> UpdateExambyId(Guid ExamId, CreateExamDto createExamDto);
+        public Task<List<ExamResponseDto>> GetExamByGrade(int studentGrade);
     }
 }

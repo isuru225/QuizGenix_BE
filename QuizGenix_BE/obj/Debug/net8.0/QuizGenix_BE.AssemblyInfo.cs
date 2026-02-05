@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QuizGenix_BE")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7b8a4ed35019ae4ada002b1fea8a30633337e3ca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f662fbb12887fa0357960ac751d379f61666d8e8")]
 [assembly: System.Reflection.AssemblyProductAttribute("QuizGenix_BE")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QuizGenix_BE")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
